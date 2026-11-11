@@ -245,7 +245,7 @@ footer li a{display:inline-flex;align-items:center;gap:8px}
 
 <section class="ben"><div class="wrap">
  <div class="b"><svg viewBox="0 0 24 24"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19.1L4 20Z"/></svg><div><b>Pedido pelo WhatsApp</b>Rápido e sem cadastro</div></div>
- <div class="b"><svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="13"/><path d="M3 12h18M12 8v13M12 8c-2-4-6-4-6-1s6 1 6 1Zm0 0c2-4 6-4 6-1s-6 1-6 1Z"/></svg><div><b>Embalagem NELIVE</b>Pronta para presentear</div></div>
+ <div class="b"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg><div><b>Desconto no Pix</b>Ou até 3x no cartão</div></div>
  <div class="b"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg><div><b>Rio de Janeiro</b>Atendimento personalizado</div></div>
 </div></section>
 
@@ -327,7 +327,7 @@ let si=0,st;function hero(){const D=P.filter(p=>p.cat==DESTAQUE);const S=(D.leng
  $("dots").onclick=e=>{if(e.target.dataset.s){go(+e.target.dataset.s);clearInterval(st)}};
  let x0=null;$("slides").ontouchstart=e=>x0=e.touches[0].clientX;$("slides").ontouchend=e=>{if(x0==null)return;const d=e.changedTouches[0].clientX-x0;if(Math.abs(d)>40){go(si+(d<0?1:-1));clearInterval(st)}x0=null};
  clearInterval(st);if(S.length>1)st=setInterval(()=>go(si+1),5500);
- const m=D[1]||D[0]||P[0];if(m)$("mid").innerHTML=`<div class="im"><img loading="lazy" src="${esc(m.fotos[2]||m.fotos[0])}" alt=""></div><div class="tx"><div class="kick">Para presentear</div><h3>Conjuntos que<br>combinam com você</h3><p>Colar e brincos pensados juntos, na embalagem NELIVE, prontos para presentear ou se presentear.</p><a class="btn" href="#pecas" data-goto="${DESTAQUE}">Comprar conjuntos</a></div>`}
+ const m=D[1]||D[0]||P[0];if(m)$("mid").innerHTML=`<div class="im"><img loading="lazy" src="${esc(m.fotos[2]||m.fotos[0])}" alt=""></div><div class="tx"><div class="kick">Para presentear</div><h3>Conjuntos que<br>combinam com você</h3><p>Colar e brincos pensados juntos, para presentear ou se presentear.</p><a class="btn" href="#pecas" data-goto="${DESTAQUE}">Comprar conjuntos</a></div>`}
 
 function rail(){$("rail").innerHTML=P.filter(p=>p.cat==DESTAQUE).map(card).join("")}
 function grid(){let l=P.filter(p=>(cat=="Todos"||p.cat==cat)&&(p.nome+" "+p.mat+" "+p.cat+" "+p.desc).toLowerCase().includes(q));
@@ -391,7 +391,7 @@ function csv(t){const r=[];let row=[],f="",qt=false;for(let i=0;i<t.length;i++){
  const h=r.shift().map(s=>s.trim().toLowerCase());return r.map(x=>Object.fromEntries(h.map((k,i)=>[k,(x[i]||"").trim()])))}
 const MAPA={"categoria":"cat","material":"mat","preço":"preco","preco":"preco","preço pix":"pix","preco pix":"pix","pix":"pix","preço no pix":"pix","preco no pix":"pix","preço cartão":"preco","preco cartao":"preco","preço no cartão":"preco","cartão":"preco","cartao":"preco","preço antigo":"de","preco antigo":"de","descrição":"desc","descricao":"desc","cores":"variacoes"};
 async function iniciar(){P=normaliza(window.NELIVE_PRODUTOS||[]);
- if(CFG.planilhaCsv){try{const t=await(await fetch(CFG.planilhaCsv,{cache:"no-store"})).text();if(!/^\s*</.test(t)){const n=normaliza(csv(t).map(o=>Object.fromEntries(Object.entries(o).map(([k,v])=>[MAPA[k]||k,v]))));if(n.length)P=n}}catch(e){}}
+ if(CFG.planilhaCsv){try{const t=await(await fetch(CFG.planilhaCsv+(/gviz/.test(CFG.planilhaCsv)&&!/headers=/.test(CFG.planilhaCsv)?"&headers=1":""),{cache:"no-store"})).text();if(!/^\s*</.test(t)){const n=normaliza(csv(t).map(o=>Object.fromEntries(Object.entries(o).map(([k,v])=>[MAPA[k]||(/pix/.test(k)?"pix":/cart/.test(k)?"preco":k),v]))));if(n.length)P=n}}catch(e){}}
  nav();hero();render()}
 iniciar();
 </script>
