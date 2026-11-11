@@ -129,6 +129,8 @@ header{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid 
 .name{font-size:14.5px;line-height:1.35;cursor:pointer}
 .price{font-size:16px;font-weight:600;margin-top:4px}
 .price s{color:var(--mute);font-weight:400;font-size:13px;margin-left:6px}
+.price em{font-style:normal;font-weight:400;font-size:.72em;color:var(--mute);margin-left:4px}
+.price .cc{display:block;font-weight:400;font-size:.68em;color:var(--mute);margin-top:2px}
 .price.q{font-weight:500;font-size:13px;letter-spacing:.06em;color:var(--wine)}
 .mob{display:flex;gap:6px;margin-top:10px}
 .mob button,.mob a{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:500;padding:11px 4px;border:1px solid var(--ink)}
@@ -287,7 +289,9 @@ footer li a{display:inline-flex;align-items:center;gap:8px}
 const CFG=window.NELIVE_CONFIG,$=id=>document.getElementById(id);
 const num=v=>{if(typeof v=="number")return v;let s=String(v||"").replace(/[^\d,.-]/g,"");if(s.includes(","))s=s.replace(/\./g,"").replace(",",".");return Number(s)||0};
 const brl=v=>Number(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-const ptxt=p=>p.preco>0?`${brl(p.preco)}${p.de>p.preco?`<s>${brl(p.de)}</s>`:""}`:"Consulte o valor";
+const pv=p=>p.pix>0?p.pix:p.preco,tem=p=>pv(p)>0,dois=p=>p.pix>0&&p.preco>p.pix,pc=p=>p.preco>0?p.preco:p.pix;
+const ptxt=p=>!tem(p)?"Consulte o valor":dois(p)?`${brl(p.pix)}<em>no Pix</em>${p.de>p.preco?`<s>${brl(p.de)}</s>`:""}<span class="cc">ou ${brl(p.preco)} no cartão</span>`:`${brl(pv(p))}${p.de>pv(p)?`<s>${brl(p.de)}</s>`:""}`;
+const pl=p=>dois(p)?`${brl(p.pix)} no Pix ou ${brl(p.preco)} no cartão`:brl(pv(p));
 const wa=t=>`https://wa.me/${CFG.whatsapp}?text=${encodeURIComponent(t)}`;
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const WA='<svg class="ico"><use href="#wa"/></svg>';
@@ -296,17 +300,17 @@ let P=[],cat="Todos",q="",ord="d",sacola=new Map();
 
 function fotoUrl(u){const m=u.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?.*id=)([\w-]+)/);return m?`https://drive.google.com/thumbnail?id=${m[1]}&sz=w1200`:u}
 function normaliza(l){return l.filter(p=>p.nome&&p.ativo!==false&&!/^n(ã|a)o$/i.test(String(p.ativo||"").trim())).map((p,i)=>({
- id:String(p.id||"p"+i),i,nome:p.nome,cat:p.cat||"Outros",mat:p.mat||"",preco:num(p.preco),de:num(p.de),desc:p.desc||"",selo:p.selo||"",
+ id:String(p.id||"p"+i),i,nome:p.nome,cat:p.cat||"Outros",mat:p.mat||"",preco:num(p.preco),pix:num(p.pix),de:num(p.de),desc:p.desc||"",selo:p.selo||"",
  variacoes:Array.isArray(p.variacoes)?p.variacoes:String(p.variacoes||"").split(/[,;]/).map(s=>s.trim()).filter(Boolean),
  fotos:(Array.isArray(p.fotos)?p.fotos:String(p.fotos||"").split(/[\s,;]+/).filter(Boolean)).map(fotoUrl)}))}
 const cats=()=>{const c=[...new Set(P.map(p=>p.cat))];return [DESTAQUE,...c.filter(x=>x!=DESTAQUE)].filter(x=>c.includes(x))};
-const msg1=(p,v)=>`Olá, ${CFG.loja}! Tenho interesse em: ${p.nome}${v?` (${v})`:""}${p.preco>0?` – ${brl(p.preco)}`:""}. ${p.preco>0?"Ainda está disponível?":"Pode me passar o valor?"}`;
+const msg1=(p,v)=>`Olá, ${CFG.loja}! Tenho interesse em: ${p.nome}${v?` (${v})`:""}${tem(p)?` – ${pl(p)}`:""}. ${tem(p)?"Ainda está disponível?":"Pode me passar o valor?"}`;
 
 function card(p){const n=sacola.has(p.id),f=p.fotos;return `<article class="card">
  <div class="ph" data-open="${esc(p.id)}">${f[0]?`<img loading="lazy" src="${esc(f[0])}" alt="${esc(p.nome)}">`:""}${f[1]?`<img class="alt" loading="lazy" src="${esc(f[1])}" alt="">`:""}
- ${p.de>p.preco&&p.preco>0?'<span class="badge w">Oferta</span>':p.selo?`<span class="badge">${esc(p.selo)}</span>`:""}
+ ${p.de>pv(p)&&tem(p)?'<span class="badge w">Oferta</span>':p.selo?`<span class="badge">${esc(p.selo)}</span>`:""}
  <button class="qa ${n?"in":""}" data-id="${esc(p.id)}">${n?"✓ Na sacola":"Adicionar à sacola"}</button></div>
- <div class="info"><div class="mat">${esc(p.mat)}</div><div class="name" data-open="${esc(p.id)}">${esc(p.nome)}</div><div class="price ${p.preco>0?"":"q"}">${ptxt(p)}</div>
+ <div class="info"><div class="mat">${esc(p.mat)}</div><div class="name" data-open="${esc(p.id)}">${esc(p.nome)}</div><div class="price ${tem(p)?"":"q"}">${ptxt(p)}</div>
  <div class="mob mb"><button class="${n?"in":""}" data-id="${esc(p.id)}">${n?"✓ Sacola":"+ Sacola"}</button><a target="_blank" rel="noopener" href="${wa(msg1(p,p.variacoes[0]))}">${WA}Pedir</a></div></div></article>`}
 
 function nav(){const c=cats();
@@ -330,8 +334,8 @@ function grid(){let l=P.filter(p=>(cat=="Todos"||p.cat==cat)&&(p.nome+" "+p.mat+
  const rank=p=>p.cat==DESTAQUE?0:1;
  if(ord=="d")l.sort((a,b)=>rank(a)-rank(b)||a.i-b.i);
  if(ord=="n")l.sort((a,b)=>b.i-a.i);
- if(ord=="a")l.sort((a,b)=>(a.preco||1e9)-(b.preco||1e9));
- if(ord=="z")l.sort((a,b)=>b.preco-a.preco);
+ if(ord=="a")l.sort((a,b)=>(pv(a)||1e9)-(pv(b)||1e9));
+ if(ord=="z")l.sort((a,b)=>pv(b)-pv(a));
  $("ptitle").textContent=q?`Resultados para "${q}"`:cat=="Todos"?"Todas as peças":cat;
  $("chips").innerHTML=["Todos",...cats()].map(x=>`<button class="chip ${x==cat?"on":""}" data-c="${esc(x)}">${esc(x)}</button>`).join("");
  $("grid").innerHTML=l.length?l.map(card).join(""):'<div class="empty">Nenhuma peça encontrada.</div>'}
@@ -339,10 +343,10 @@ function render(){rail();grid();bag()}
 
 function bag(){const it=P.filter(p=>sacola.has(p.id));const c=$("cnt");c.textContent=it.length;c.classList.toggle("on",it.length>0);
  if(!it.length){$("bagl").innerHTML='<div class="bage">Sua sacola está vazia.</div>';$("bagf").innerHTML="";return}
- const tot=it.reduce((s,p)=>s+p.preco,0),cons=it.some(p=>!(p.preco>0));
- $("bagl").innerHTML=it.map(p=>`<div class="bi"><img src="${esc(p.fotos[0])}" alt=""><div><div class="n">${esc(p.nome)}</div>${sacola.get(p.id)?`<div class="v">Cor: ${esc(sacola.get(p.id))}</div>`:""}<div class="p">${p.preco>0?brl(p.preco):"Consulte o valor"}</div></div><button data-rm="${esc(p.id)}">Remover</button></div>`).join("");
- const txt=`Olá, ${CFG.loja}! Quero fazer um pedido:\n\n`+it.map(p=>{const v=sacola.get(p.id);return `• ${p.nome}${v?` (${v})`:""} – ${p.preco>0?brl(p.preco):"consultar valor"}`}).join("\n")+`\n\nTotal: ${brl(tot)}${cons?" + peças a consultar":""}`;
- $("bagf").innerHTML=`<div class="tot"><span>Total${cons?" (sem as peças a consultar)":""}</span><b>${brl(tot)}</b></div><a class="btn" target="_blank" rel="noopener" href="${wa(txt)}">${WA}Enviar pedido pelo WhatsApp</a><small>Combinamos pagamento e entrega pelo WhatsApp.</small>`}
+ const tot=it.reduce((s,p)=>s+pv(p),0),totc=it.reduce((s,p)=>s+pc(p),0),cons=it.some(p=>!tem(p));
+ $("bagl").innerHTML=it.map(p=>`<div class="bi"><img src="${esc(p.fotos[0])}" alt=""><div><div class="n">${esc(p.nome)}</div>${sacola.get(p.id)?`<div class="v">Cor: ${esc(sacola.get(p.id))}</div>`:""}<div class="p">${tem(p)?pl(p):"Consulte o valor"}</div></div><button data-rm="${esc(p.id)}">Remover</button></div>`).join("");
+ const txt=`Olá, ${CFG.loja}! Quero fazer um pedido:\n\n`+it.map(p=>{const v=sacola.get(p.id);return `• ${p.nome}${v?` (${v})`:""} – ${tem(p)?pl(p):"consultar valor"}`}).join("\n")+`\n\nTotal: ${totc>tot?`${brl(tot)} no Pix ou ${brl(totc)} no cartão`:brl(tot)}${cons?" + peças a consultar":""}`;
+ $("bagf").innerHTML=`<div class="tot"><span>Total${totc>tot?" no Pix":""}${cons?" (sem as peças a consultar)":""}</span><b>${brl(tot)}</b></div>${totc>tot?`<div class="tot"><span>ou no cartão</span><b>${brl(totc)}</b></div>`:""}<a class="btn" target="_blank" rel="noopener" href="${wa(txt)}">${WA}Enviar pedido pelo WhatsApp</a><small>Combinamos pagamento e entrega pelo WhatsApp.</small>`}
 
 let tt;function toast(t,showBag){$("ttx").textContent=t;$("tbag").style.display=showBag?"":"none";$("toast").classList.add("show");clearTimeout(tt);tt=setTimeout(()=>$("toast").classList.remove("show"),2400)}
 function toggle(p,v){if(sacola.has(p.id)){sacola.delete(p.id);toast("Removido da sacola")}else{sacola.set(p.id,v??p.variacoes[0]??"");toast("Adicionado à sacola",true)}}
@@ -351,10 +355,10 @@ function drawer(id,on){$(id).classList.toggle("show",on);document.body.style.ove
 function abrir(id){const p=P.find(x=>x.id==id);if(!p)return;let v=p.variacoes[0]||"";
  const draw=()=>{const n=sacola.has(p.id);$("sheet").innerHTML=`<button class="x" aria-label="Fechar">×</button><div class="wr">
  <div><div class="gal" id="gal">${p.fotos.map(f=>`<img src="${esc(f)}" alt="${esc(p.nome)}">`).join("")}</div>${p.fotos.length>1?`<div class="thumbs">${p.fotos.map((f,i)=>`<button class="${i?"":"on"}" data-t="${i}"><img src="${esc(f)}" alt=""></button>`).join("")}</div>`:""}</div>
- <div class="det"><div class="mat">${esc(p.cat)} · ${esc(p.mat)}</div><h2>${esc(p.nome)}</h2><div class="price ${p.preco>0?"":"q"}">${ptxt(p)}</div>
+ <div class="det"><div class="mat">${esc(p.cat)} · ${esc(p.mat)}</div><h2>${esc(p.nome)}</h2><div class="price ${tem(p)?"":"q"}">${ptxt(p)}</div>
  ${p.desc?`<p>${esc(p.desc)}</p>`:""}
  ${p.variacoes.length>1?`<div class="vars"><span>Cor</span>${p.variacoes.map(x=>`<button class="${x==v?"on":""}" data-v="${esc(x)}">${esc(x)}</button>`).join("")}</div>`:""}
- <div class="dbtn"><button class="btn dark" data-sid="1">${n?"✓ Na sacola (remover)":"Adicionar à sacola"}</button><a class="btn wa" target="_blank" rel="noopener" href="${wa(msg1(p,v))}">${WA}${p.preco>0?"Comprar pelo WhatsApp":"Consultar valor no WhatsApp"}</a></div></div></div>`;
+ <div class="dbtn"><button class="btn dark" data-sid="1">${n?"✓ Na sacola (remover)":"Adicionar à sacola"}</button><a class="btn wa" target="_blank" rel="noopener" href="${wa(msg1(p,v))}">${WA}${tem(p)?"Comprar pelo WhatsApp":"Consultar valor no WhatsApp"}</a></div></div></div>`;
  const g=$("gal");const sync=()=>{const i=Math.round(g.scrollLeft/g.clientWidth);document.querySelectorAll(".thumbs button").forEach((d,k)=>d.classList.toggle("on",k==i))};g.onscroll=sync};
  draw();$("ov").classList.add("show");document.body.style.overflow="hidden";
  $("sheet").onclick=e=>{const t=e.target.closest("button");if(!t)return;if(t.classList.contains("x"))return fechar();
@@ -385,7 +389,7 @@ const ST=["Pedidos pelo WhatsApp · "+tel,"Conjuntos em destaque","Acessórios q
 
 function csv(t){const r=[];let row=[],f="",qt=false;for(let i=0;i<t.length;i++){const c=t[i];if(qt){if(c=='"'&&t[i+1]=='"'){f+='"';i++}else if(c=='"')qt=false;else f+=c}else if(c=='"')qt=true;else if(c==","){row.push(f);f=""}else if(c=="\n"){row.push(f);r.push(row);row=[];f=""}else if(c!="\r")f+=c}if(f||row.length){row.push(f);r.push(row)}
  const h=r.shift().map(s=>s.trim().toLowerCase());return r.map(x=>Object.fromEntries(h.map((k,i)=>[k,(x[i]||"").trim()])))}
-const MAPA={"categoria":"cat","material":"mat","preço":"preco","preco":"preco","preço antigo":"de","preco antigo":"de","descrição":"desc","descricao":"desc","cores":"variacoes"};
+const MAPA={"categoria":"cat","material":"mat","preço":"preco","preco":"preco","preço pix":"pix","preco pix":"pix","pix":"pix","preço no pix":"pix","preco no pix":"pix","preço cartão":"preco","preco cartao":"preco","preço no cartão":"preco","cartão":"preco","cartao":"preco","preço antigo":"de","preco antigo":"de","descrição":"desc","descricao":"desc","cores":"variacoes"};
 async function iniciar(){P=normaliza(window.NELIVE_PRODUTOS||[]);
  if(CFG.planilhaCsv){try{const t=await(await fetch(CFG.planilhaCsv,{cache:"no-store"})).text();if(!/^\s*</.test(t)){const n=normaliza(csv(t).map(o=>Object.fromEntries(Object.entries(o).map(([k,v])=>[MAPA[k]||k,v]))));if(n.length)P=n}}catch(e){}}
  nav();hero();render()}
