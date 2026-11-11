@@ -2,7 +2,7 @@
 window.NELIVE_CONFIG = {
   loja: "NELIVE Joias e Semijoias",
   whatsapp: "5521966548862",   // DDI + DDD + número, só dígitos
-  planilhaCsv: ""            // link CSV da planilha Google (opcional)
+  planilhaCsv: "https://docs.google.com/spreadsheets/d/1z7iaxH67fO8jDQfMWYfTD3P876OLJYce1tbbOpc5V0A/gviz/tq?tqx=out:csv"            // link CSV da planilha Google (opcional)
 };
 
 // Peças do catálogo
